@@ -9,9 +9,10 @@ class _SimpleSegmentationModel(nn.Module):
 
     def __init__(self, backbone, classifier, devices, aux_classifier=None):
         super(_SimpleSegmentationModel, self).__init__()
-        self.backbone = backbone.to(devices[0])
-        self.classifier = classifier.to(devices[1])
-        self.aux_classifier = aux_classifier.to(devices[1])
+        self.devices = ["cuda:0","cuda:1"]
+        self.backbone = backbone.to(self.devices[0])
+        self.classifier = classifier.to(self.devices[1])
+        self.aux_classifier = aux_classifier.to(self.devices[1])
 
     def forward(self, x):
         input_shape = x.shape[-2:]
@@ -20,13 +21,13 @@ class _SimpleSegmentationModel(nn.Module):
 
         result = OrderedDict()
         x = features["out"]
-        x = self.classifier(x.to(devices[1]))
+        x = self.classifier(x.to(self.devices[1]))
         x = F.interpolate(x, size=input_shape, mode='bilinear', align_corners=False)
         result["out"] = x
 
         if self.aux_classifier is not None:
             x = features["aux"]
-            x = self.aux_classifier(x.to(devices[1]))
+            x = self.aux_classifier(x.to(self.devices[1]))
             x = F.interpolate(x, size=input_shape, mode='bilinear', align_corners=False)
             result["aux"] = x
 
